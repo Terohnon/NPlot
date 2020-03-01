@@ -97,6 +97,8 @@ namespace NPlot
 			{
 				startTradingTime_ = value.Ticks;
 				tradingTimeSpan_ = endTradingTime_ - startTradingTime_;
+                this.WorldMax = this.WorldMax;
+                this.WorldMin = this.WorldMin;
 			}
 		}
 		private long startTradingTime_;
@@ -116,7 +118,9 @@ namespace NPlot
 			{
 				endTradingTime_ = value.Ticks;
 				tradingTimeSpan_ = endTradingTime_ - startTradingTime_;
-			}
+                this.WorldMax = this.WorldMax;
+                this.WorldMin = this.WorldMin;
+            }
 		}
 		private long endTradingTime_;
 

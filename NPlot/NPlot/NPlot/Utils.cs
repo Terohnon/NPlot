@@ -41,7 +41,7 @@ namespace NPlot
 	/// <summary>
 	/// General purpose utility functions used internally.
 	/// </summary>
-	internal class Utils
+	public class Utils
 	{
 
 		/// <summary>
@@ -353,5 +353,39 @@ namespace NPlot
 
 			return final;
 		}
-	}
+
+        /// <summary>
+        /// Returns the index corresponding to the given value/time (or -1 if no match is found)
+        /// </summary>
+        /// <param name="data">The data table to search through</param>
+        /// <param name="val">The value to get the point for</param>
+        /// <returns>The index of the point in the X axis of the source data</returns>
+        public static int GetDataIndex(SequenceAdapter src, double val)
+        {
+            int idx = -1;
+            int min = 0;
+            int max = src.Count;
+
+            while(max > min)
+            {
+                int mid = (max + min) / 2;
+                double check = src[mid].X;
+                if((min + 1) >= max)
+                {
+                    idx = min;
+                    break;
+                }
+                else if(check > val)
+                {
+                    max = mid;
+                }
+                else
+                {
+                    min = mid;
+                }
+            }
+
+            return idx;
+        }
+    }
 }

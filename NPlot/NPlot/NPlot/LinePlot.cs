@@ -137,36 +137,54 @@ namespace NPlot
 					rightCutoff -= shadowCorrection;
 				}
 
-				for (int i = 1; i < numberPoints; ++i)
+                int start = Utils.GetDataIndex(data, leftCutoff);
+                int end = Math.Min(Utils.GetDataIndex(data, rightCutoff) + 1, (data.Count - 1)); // Need to add one here so that the plot will extend off the right side of the screen
+                PointF p1;
+                for(; start < end; start++)
+                {
+                    // Ensure the starting point is valid
+                    var startPoint = data[start];
+                    if(Double.IsNaN(startPoint.X) || Double.IsNaN(startPoint.Y))
+                    {
+                        continue;
+                    }
+
+                    p1 = t.Transform(startPoint);
+                    if(!float.IsNaN(p1.X) && !float.IsNaN(p1.Y))
+                    {
+                        break;
+                    }
+                }
+                PointF p2 = p1;
+                const float spacing = 1.0f;
+                float avgCount = 1.0f;
+                float min = p1.Y;
+                float max = p1.Y;
+                for (int i = start + 1; i <= end; ++i)
 				{
-					// check to see if any values null. If so, then continue.
-					double dx1 = data[i-1].X;
-					double dx2 = data[i].X;
-					double dy1 = data[i-1].Y;
-					double dy2 = data[i].Y;
-					if ( Double.IsNaN(dx1) || Double.IsNaN(dy1) ||
-						Double.IsNaN(dx2) || Double.IsNaN(dy2) )
+                    // check to see if any values null. If so, then continue.
+                    var point = data[i];
+					if(Double.IsNaN(point.X) || Double.IsNaN(point.Y))
 					{
 						continue;
 					}
+                    PointF p = t.Transform(point);
+                    if(float.IsNaN(p.X) || float.IsNaN(p.Y))
+                    {
+                        continue;
+                    }
 
-					// do horizontal clipping here, to speed up
-					if ((dx1 < leftCutoff && dx2 < leftCutoff) ||
-						(rightCutoff < dx1 && rightCutoff < dx2))
-					{
-						continue;
-					}
-
-					// else draw line.	
-					PointF p1 = t.Transform( data[i-1] );
-					PointF p2 = t.Transform( data[i] );
-					
-					// when very far zoomed in, points can fall ontop of each other,
-					// and g.DrawLine throws an overflow exception
-					if (p1.Equals(p2))
-					{
-						continue;
-					}
+                    // Wait until there is at least a pixel between the previous line and the next one.
+                    // Otherwise it takes longer to draw the sub-points, and g.DrawLine can throw an overflow exception
+                    p2 = new PointF(p.X, p2.Y - (p2.Y / avgCount) + (p.Y / avgCount));
+                    min = Math.Min(p.Y, min);
+                    max = Math.Max(p.Y, max);
+                    avgCount++;
+                    if(p.X < (p1.X + spacing))
+                    {
+                        continue;
+                    }
+                    p2.Y = (p2.Y >= p1.Y) ? max : min;
 
 					if (drawShadow)
 					{
@@ -180,7 +198,11 @@ namespace NPlot
 					{
 						g.DrawLine( Pen, p1.X, p1.Y, p2.X, p2.Y );
 					}
-				}
+                    p1 = p2;
+                    min = p1.Y;
+                    max = p1.Y;
+                    avgCount = 1.35f;   // Average in a little of the last point to smooth roll-overs between pixel boundaries
+                }
 			}
 		}
 

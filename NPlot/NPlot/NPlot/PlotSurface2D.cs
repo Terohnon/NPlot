@@ -77,7 +77,9 @@ namespace NPlot
 		private System.Collections.ArrayList xAxisPositions_;
 		private System.Collections.ArrayList yAxisPositions_;
 		private System.Collections.ArrayList zPositions_;
-		private System.Collections.SortedList ordering_;
+        private System.Collections.ArrayList xAxisOverrides_;
+        private System.Collections.ArrayList yAxisOverrides_;
+        private System.Collections.SortedList ordering_;
 
 		private System.Drawing.Drawing2D.SmoothingMode smoothingMode_;
 
@@ -398,7 +400,9 @@ namespace NPlot
 			xAxisPositions_ = new ArrayList();
 			yAxisPositions_ = new ArrayList();
 			zPositions_ = new ArrayList();
-			ordering_ = new SortedList();
+            xAxisOverrides_ = new ArrayList();
+            yAxisOverrides_ = new ArrayList();
+            ordering_ = new SortedList();
 
 			try
 			{
@@ -497,24 +501,41 @@ namespace NPlot
 		{
 			Add(p, xp, yp, 0);
 		}
-		
-		
-		/// <summary>
-		/// Adds a drawable object to the plot surface against the specified axes. If
-		/// the object is an IPlot, the PlotSurface2D axes will also be updated.
-		/// </summary>
-		/// <param name="p">the IDrawable object to add to the plot surface</param>
-		/// <param name="xp">the x-axis to add the plot against.</param>
-		/// <param name="yp">the y-axis to add the plot against.</param>
-		/// <param name="zOrder">The z-ordering when drawing (objects with lower numbers are drawn first)</param>
-		public void Add( IDrawable p, XAxisPosition xp, YAxisPosition yp, int zOrder )
+
+        /// <summary>
+        /// Adds a drawable object to the plot surface against the specified axes. If
+        /// the object is an IPlot, the PlotSurface2D axes will also be updated.
+        /// </summary>
+        /// <param name="p">the IDrawable object to add to the plot surface</param>
+        /// <param name="xp">the x-axis to add the plot against.</param>
+        /// <param name="yp">the y-axis to add the plot against.</param>
+        /// <param name="zOrder">The z-ordering when drawing (objects with lower numbers are drawn first)</param>
+        public void Add(IDrawable p, XAxisPosition xp, YAxisPosition yp, int zOrder)
+        {
+            Add(p, xp, yp, zOrder, null, null);
+        }
+
+
+        /// <summary>
+        /// Adds a drawable object to the plot surface against the specified axes. If
+        /// the object is an IPlot, the PlotSurface2D axes will also be updated.
+        /// </summary>
+        /// <param name="p">the IDrawable object to add to the plot surface</param>
+        /// <param name="xp">the x-axis to add the plot against.</param>
+        /// <param name="yp">the y-axis to add the plot against.</param>
+        /// <param name="zOrder">The z-ordering when drawing (objects with lower numbers are drawn first)</param>
+        /// <param name="xAxisOverride">The X axis to use when drawing this particular drawable</param>
+        /// <param name="yAxisOverride">The Y axis to use when drawing this particular drawable</param>
+        public void Add(IDrawable p, XAxisPosition xp, YAxisPosition yp, int zOrder, Axis xAxisOverride, Axis yAxisOverride )
 		{
 			drawables_.Add( p );
 			xAxisPositions_.Add( xp );
 			yAxisPositions_.Add( yp );
 			zPositions_.Add((double)zOrder);
-			// fraction is to make key unique. With 10 million plots at same z, this buggers up.. 
-			double fraction = (double)(++uniqueCounter_)/10000000.0f; 
+            xAxisOverrides_.Add(xAxisOverride);
+            yAxisOverrides_.Add(yAxisOverride);
+            // fraction is to make key unique. With 10 million plots at same z, this buggers up.. 
+            double fraction = (double)(++uniqueCounter_)/10000000.0f; 
 			ordering_.Add( (double)zOrder + fraction, drawables_.Count - 1 );
 			
 			// if p is just an IDrawable, then it can't affect the axes.
@@ -574,7 +595,11 @@ namespace NPlot
 					}
 					else
 					{
-						this.xAxis1_.LUB(p.SuggestXAxis());
+                        Axis suggestedAxis = p.SuggestXAxis();
+                        if(suggestedAxis.WorldLength != 1)
+                        {
+                            this.xAxis1_.LUB(suggestedAxis);
+                        }
 					}
 
 					if (this.xAxis1_ != null)
@@ -608,8 +633,12 @@ namespace NPlot
 					}
 					else
 					{
-						this.xAxis2_.LUB(p.SuggestXAxis());
-					}
+                        Axis suggestedAxis = p.SuggestXAxis();
+                        if(suggestedAxis.WorldLength != 1)
+                        {
+                            this.xAxis2_.LUB(suggestedAxis);
+                        }
+                    }
 
 					if (this.xAxis2_ != null)
 					{
@@ -1037,6 +1066,7 @@ namespace NPlot
 				PhysicalAxis drawXAxis;
 				PhysicalAxis drawYAxis;
 
+                
 				if ( xap == XAxisPosition.Bottom )
 				{
 					drawXAxis = pXAxis1;
@@ -1045,8 +1075,12 @@ namespace NPlot
 				{
 					drawXAxis = pXAxis2;
 				}
+                if(xAxisOverrides_[i] != null)
+                {
+                    drawXAxis = new PhysicalAxis((Axis)xAxisOverrides_[i], drawXAxis.PhysicalMin, drawXAxis.PhysicalMax);
+                }
 
-				if ( yap == YAxisPosition.Left )
+                if ( yap == YAxisPosition.Left )
 				{
 					drawYAxis = pYAxis1;
 				}
@@ -1054,9 +1088,13 @@ namespace NPlot
 				{
 					drawYAxis = pYAxis2;
 				}
-	
-				// set the clipping region.. (necessary for zoom)
-				g.Clip = new Region((Rectangle)plotAreaBoundingBoxCache_);
+                if(yAxisOverrides_[i] != null)
+                {
+                    drawYAxis = new PhysicalAxis((Axis)yAxisOverrides_[i], drawYAxis.PhysicalMin, drawYAxis.PhysicalMax);
+                }
+
+                // set the clipping region.. (necessary for zoom)
+                g.Clip = new Region((Rectangle)plotAreaBoundingBoxCache_);
 				// plot.
 				drawable.Draw( g, drawXAxis, drawYAxis );
 				// reset it..
@@ -1186,8 +1224,10 @@ namespace NPlot
 			xAxisPositions_.RemoveAt( index );
 			yAxisPositions_.RemoveAt( index );
 			zPositions_.RemoveAt(index);
+            xAxisOverrides_.RemoveAt(index);
+            yAxisOverrides_.RemoveAt(index);
 
-			if (updateAxes)
+            if (updateAxes)
 			{
 				this.UpdateAxes(true);
 			}
@@ -1235,10 +1275,8 @@ namespace NPlot
 		{
 			int index = drawables_.IndexOf( plot );
 			XAxisPosition p = (XAxisPosition)xAxisPositions_[index];
-			if ( p == XAxisPosition.Bottom )
-				return this.xAxis1_;
-			else
-				return this.xAxis2_;
+            return ((xAxisOverrides_[index] != null) ? (Axis)xAxisOverrides_[index] :
+                    (p == XAxisPosition.Bottom) ? this.xAxis1_ : this.xAxis2_);
 		}
 
 
@@ -1251,11 +1289,9 @@ namespace NPlot
 		{
 			int index = drawables_.IndexOf( plot );
 			YAxisPosition p = (YAxisPosition)yAxisPositions_[index];
-			if ( p == YAxisPosition.Left )
-				return this.yAxis1_;
-			else
-				return this.yAxis2_;
-		}
+            return ((yAxisOverrides_[index] != null) ? (Axis)yAxisOverrides_[index] :
+                    (p == YAxisPosition.Left) ? this.yAxis1_ : this.yAxis2_);
+        }
 
 
 		/// <summary>
