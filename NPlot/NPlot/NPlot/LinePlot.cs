@@ -139,7 +139,7 @@ namespace NPlot
 
                 int start = Utils.GetDataIndex(data, leftCutoff);
                 int end = Math.Min(Utils.GetDataIndex(data, rightCutoff) + 1, (data.Count - 1)); // Need to add one here so that the plot will extend off the right side of the screen
-                PointF p1;
+                PointF p1 = new PointF();
                 for(; start < end; start++)
                 {
                     // Ensure the starting point is valid
