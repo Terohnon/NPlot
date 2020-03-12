@@ -154,7 +154,14 @@ namespace NPlot {
 			if (XAxis2 != null) {
 				XAxis2.TranslateRange (shiftProportion);
 			}
-		}
+            for(int i = 0; i < xAxisOverrides_.Count; i++)
+            {
+                if(xAxisOverrides_[i] != null)
+                {
+                    ((Axis)xAxisOverrides_[i]).TranslateRange(shiftProportion);
+                }
+            }
+        }
 		
 		/// <summary>
 		/// Translate all PlotSurface Y-Axes by shiftProportion
@@ -167,7 +174,14 @@ namespace NPlot {
 			if (YAxis2 != null) {
 				YAxis2.TranslateRange (shiftProportion);
 			}
-		}
+            for(int i = 0; i < yAxisOverrides_.Count; i++)
+            {
+                if(yAxisOverrides_[i] != null)
+                {
+                    ((Axis)yAxisOverrides_[i]).TranslateRange(shiftProportion);
+                }
+            }
+        }
 		
 		/// <summary>
 		/// Zoom all PlotSurface X-Axes about focusPoint by zoomProportion 
@@ -180,7 +194,14 @@ namespace NPlot {
 			if (XAxis2 != null) {
 				XAxis2.IncreaseRange(zoomProportion,focusRatio);
 			}
-		}
+            for(int i = 0; i < xAxisOverrides_.Count; i++)
+            {
+                if(xAxisOverrides_[i] != null)
+                {
+                    ((Axis)xAxisOverrides_[i]).IncreaseRange(zoomProportion, focusRatio);
+                }
+            }
+        }
 
 		/// <summary>
 		/// Zoom all PlotSurface Y-Axes about focusPoint by zoomProportion 
@@ -193,6 +214,13 @@ namespace NPlot {
 			if (YAxis2 != null) {
 				YAxis2.IncreaseRange(zoomProportion,focusRatio);
 			}
+            for(int i = 0; i < yAxisOverrides_.Count; i++)
+            {
+                if(yAxisOverrides_[i] != null)
+                {
+                    ((Axis)yAxisOverrides_[i]).IncreaseRange(zoomProportion, focusRatio);
+                }
+            }
 		}
 
 		/// <summary>

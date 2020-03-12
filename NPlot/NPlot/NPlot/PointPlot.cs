@@ -61,48 +61,51 @@ namespace NPlot
 		}
 
 
-		/// <summary>
-		/// Draws the point plot on a GDI+ surface against the provided x and y axes.
-		/// </summary>
-		/// <param name="g">The GDI+ surface on which to draw.</param>
-		/// <param name="xAxis">The X-Axis to draw against.</param>
-		/// <param name="yAxis">The Y-Axis to draw against.</param>
-		public virtual void Draw( Graphics g, PhysicalAxis xAxis, PhysicalAxis yAxis )
-		{
-			SequenceAdapter data_ = 
-				new SequenceAdapter( this.DataSource, this.DataMember, this.OrdinateData, this.AbscissaData );
+        /// <summary>
+        /// Draws the point plot on a GDI+ surface against the provided x and y axes.
+        /// </summary>
+        /// <param name="g">The GDI+ surface on which to draw.</param>
+        /// <param name="xAxis">The X-Axis to draw against.</param>
+        /// <param name="yAxis">The Y-Axis to draw against.</param>
+        public virtual void Draw(Graphics g, PhysicalAxis xAxis, PhysicalAxis yAxis)
+        {
+            SequenceAdapter data_ =
+                new SequenceAdapter(this.DataSource, this.DataMember, this.OrdinateData, this.AbscissaData);
 
-			float leftCutoff_ = xAxis.PhysicalMin.X - marker_.Size;
-			float rightCutoff_ = xAxis.PhysicalMax.X + marker_.Size;
+            float leftCutoff_ = xAxis.PhysicalMin.X - marker_.Size;
+            float rightCutoff_ = xAxis.PhysicalMax.X + marker_.Size;
 
-			for (int i=0; i<data_.Count; ++i)
-			{
-				if ( !Double.IsNaN(data_[i].X) && !Double.IsNaN(data_[i].Y) )
-				{
-					PointF xPos = xAxis.WorldToPhysical( data_[i].X, false);
-					if (xPos.X < leftCutoff_ || rightCutoff_ < xPos.X)
-					{
-						continue;
-					}
+            for(int i = 0; i < data_.Count; ++i)
+            {
+                var p1 = data_[i];
 
-					PointF yPos = yAxis.WorldToPhysical( data_[i].Y, false);
-					marker_.Draw( g, (int)xPos.X, (int)yPos.Y );
-					if (marker_.DropLine)
-					{
-						PointD yMin = new PointD( data_[i].X, Math.Max( 0.0f, yAxis.Axis.WorldMin ) );
-						PointF yStart = yAxis.WorldToPhysical( yMin.Y, false );
-						g.DrawLine( marker_.Pen, new Point((int)xPos.X,(int)yStart.Y), new Point((int)xPos.X,(int)yPos.Y) );
-					}
-				}
-			}
-		}
+                if(!Double.IsNaN(p1.X) && !Double.IsNaN(p1.Y))
+                {
+                    PointF xPos = xAxis.WorldToPhysical(p1.X, false);
+                    if(float.IsNaN(xPos.X) || xPos.X < leftCutoff_ || rightCutoff_ < xPos.X)
+                    {
+                        continue;
+                    }
+
+                    PointF yPos = yAxis.WorldToPhysical(p1.Y, false);
+                    if(float.IsNaN(yPos.Y)) continue;
+                    marker_.Draw(g, (int)xPos.X, (int)yPos.Y);
+                    if(marker_.DropLine)
+                    {
+                        PointD yMin = new PointD(p1.X, Math.Max(0.0f, yAxis.Axis.WorldMin));
+                        PointF yStart = yAxis.WorldToPhysical(yMin.Y, false);
+                        g.DrawLine(marker_.Pen, new Point((int)xPos.X, (int)yStart.Y), new Point((int)xPos.X, (int)yPos.Y));
+                    }
+                }
+            }
+        }
 
 
-		/// <summary>
-		/// Returns an x-axis that is suitable for drawing this plot.
-		/// </summary>
-		/// <returns>A suitable x-axis.</returns>
-		public Axis SuggestXAxis()
+        /// <summary>
+        /// Returns an x-axis that is suitable for drawing this plot.
+        /// </summary>
+        /// <returns>A suitable x-axis.</returns>
+        public Axis SuggestXAxis()
 		{
 			SequenceAdapter data_ = 
 				new SequenceAdapter( this.DataSource, this.DataMember, this.OrdinateData, this.AbscissaData );

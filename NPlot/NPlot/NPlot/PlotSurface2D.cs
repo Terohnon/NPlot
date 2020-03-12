@@ -77,8 +77,8 @@ namespace NPlot
 		private System.Collections.ArrayList xAxisPositions_;
 		private System.Collections.ArrayList yAxisPositions_;
 		private System.Collections.ArrayList zPositions_;
-        private System.Collections.ArrayList xAxisOverrides_;
-        private System.Collections.ArrayList yAxisOverrides_;
+        protected System.Collections.ArrayList xAxisOverrides_;
+        protected System.Collections.ArrayList yAxisOverrides_;
         private System.Collections.SortedList ordering_;
 
 		private System.Drawing.Drawing2D.SmoothingMode smoothingMode_;
